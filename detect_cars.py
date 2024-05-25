@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 from datetime import datetime
+import sys
+import os
 
 def load_yolo():
     net = cv2.dnn.readNet("/app/yolo/yolov3.weights", "/app/yolo/yolov3.cfg")
@@ -56,7 +58,7 @@ def draw_labels(detections, colors, classes, img):
         x, y, w, h = box
         color = colors[class_id]
         cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
-        cv2.putText(img, label, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 1/2, color, 2)
+        cv2.putText(img, label, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
     print(f"Number of cars detected: {car_count}")
     print(f"Number of trucks detected: {truck_count}")
 
@@ -69,13 +71,19 @@ def image_detect(img_path, conf_threshold=0.5, nms_threshold=0.4):
     colors = np.random.uniform(0, 255, size=(len(classes), 3))
     draw_labels(detections, colors, classes, image)
     now = datetime.now()
-    current_time_str = now.strftime("%H:%M:%S")
-    cv2.imwrite("./result/detected_image" + current_time_str + ".jpg", image)
-    print("Image saved as detected_image.jpg")
+    current_time_str = now.strftime("%H%M%S")
+    os.makedirs("./result", exist_ok=True)
+    output_path = f"./result/detected_image_{current_time_str}.jpg"
+    cv2.imwrite(output_path, image)
+    print(f"Image saved as {output_path}")
 
 if __name__ == '__main__':
-    import sys
+    if len(sys.argv) < 2:
+        print("Usage: python detect_cars.py <image_path> [<conf_threshold> <nms_threshold>]")
+        sys.exit(1)
+    
     image_path = sys.argv[1]
     conf_threshold = float(sys.argv[2]) if len(sys.argv) > 2 else 0.5
     nms_threshold = float(sys.argv[3]) if len(sys.argv) > 3 else 0.4
+
     image_detect(image_path, conf_threshold, nms_threshold)
