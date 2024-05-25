@@ -2,6 +2,8 @@
 
 SAMPLES_DIR="./samples"
 
+rm result/*
+
 CONF_THRESHOLD=${1:-0.5}
 NMS_THRESHOLD=${2:-0.4}
 
