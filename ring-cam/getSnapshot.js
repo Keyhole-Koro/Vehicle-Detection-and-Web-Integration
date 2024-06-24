@@ -30,3 +30,8 @@ async function getSnapshot() {
 }
 
 getSnapshot();
+
+/**
+ * api.onRefreshTokenUpdated
+ * https://github.com/dgreif/ring/wiki/Refresh-Tokens
+ */

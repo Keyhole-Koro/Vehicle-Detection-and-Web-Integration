@@ -3,13 +3,8 @@
 #include <esp_http_server.h>
 #include <Arduino.h>
 
-// CAMERA_MODEL_AI_THINKERを定義
 #define CAMERA_MODEL_AI_THINKER
 #include "camera_pins.h"
-
-// Wi-FiのSSIDとパスワードを設定
-const char* ssid = "Jupiter";
-const char* password = "asuka1152";
 
 httpd_handle_t camera_httpd = NULL;
 
@@ -18,7 +13,6 @@ static esp_err_t capture_handler(httpd_req_t *req){
    esp_err_t res = ESP_OK;
    int64_t fr_start = esp_timer_get_time();
    
-   // 画像の取り込み
    fb = esp_camera_fb_get();
    if (!fb) {
        Serial.println("Camera capture failed");
@@ -57,7 +51,12 @@ void setup() {
   Serial.setDebugOutput(true);
   Serial.println();
 
-  // WiFiを初期化
+  char *ssid;
+  char *password;
+
+  ssid = getenv("SSID");
+  password = getenv("PASSWORD");
+
   WiFi.begin(ssid, password);
   Serial.print("Connecting to WiFi");
 
@@ -98,7 +97,6 @@ void setup() {
   config.xclk_freq_hz = 20000000;
   config.pixel_format = PIXFORMAT_JPEG;
 
-  // Init with high specs to pre-allocate larger buffers
   if (psramFound()) {
     config.frame_size = FRAMESIZE_UXGA;
     config.jpeg_quality = 10;
@@ -109,7 +107,6 @@ void setup() {
     config.fb_count = 1;
   }
 
-  // カメラの初期化
   esp_err_t err = esp_camera_init(&config);
   if (err != ESP_OK) {
     Serial.printf("Camera init failed with error 0x%x", err);
@@ -118,10 +115,8 @@ void setup() {
 
   Serial.println("Camera initialized");
 
-  // カメラサーバーを開始
   startCameraServer();
 }
 
 void loop() {
-  // メインループは空のまま
 }

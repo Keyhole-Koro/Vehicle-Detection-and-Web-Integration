@@ -1,7 +1,6 @@
 #ifndef CAMERA_PINS_H
 #define CAMERA_PINS_H
 
-// AI Thinker ESP32-CAMピン定義
 #define PWDN_GPIO_NUM    32
 #define RESET_GPIO_NUM   -1
 #define XCLK_GPIO_NUM     0
@@ -20,4 +19,4 @@
 #define HREF_GPIO_NUM    23
 #define PCLK_GPIO_NUM    22
 
-#endif // CAMERA_PINS_H
+#endif
