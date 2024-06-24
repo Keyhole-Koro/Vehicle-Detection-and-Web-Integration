@@ -21,7 +21,7 @@ async function getSnapshot() {
 
     try {
         const snapshotBuffer = await camera.getSnapshot();
-        const filePath = path.join(__dirname, 'snapshot.jpg');
+        const filePath = path.join(__dirname, './result/snapshot.jpg');
         fs.writeFileSync(filePath, snapshotBuffer);
         console.log(`Snapshot saved to ${filePath}`);
     } catch (error) {
