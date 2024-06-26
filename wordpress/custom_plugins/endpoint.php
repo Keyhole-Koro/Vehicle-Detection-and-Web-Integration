@@ -1,17 +1,46 @@
 <?php
 /*
-  Plugin Name: Car Detection Endpoint
+  Plugin Name: Car Detection WebHook Endpoint
   Plugin URI:
-  Description: Set up endpoint to be requested regularly for a limited specific purpose.
+  Description: Set up WebHook endpoint to be requested regularly for a limited specific purpose.
   Version: 1.0.0
   Author: Kiho Katsukawa
   Author URI: https://github.com/Keyhole-Koro
  */
 
-// Handle POST request to update options
-function handle_body_result_update() {
+ define('VALID_API_KEY', '33f2c126-2711-4690-8e0a-87bd1d8f6386');
+ $allowed_ips = array('127.0.0.1', '192.168.3.104', '172.19.0.1');
+
+function is_ip_allowed($ip) {
+    global $allowed_ips;
+    return in_array($ip, $allowed_ips);
+}
+
+function is_api_key_valid($api_key) {
+    return $api_key === VALID_API_KEY;
+}
+
+// Handle WebHook request to update options
+function handle_webhook_request() {
     // Check if this is a POST request
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        // Get the client IP address
+        $client_ip = $_SERVER['REMOTE_ADDR'];
+
+        // Get the API key from the request headers
+        $api_key = isset($_SERVER['HTTP_X_API_KEY']) ? $_SERVER['HTTP_X_API_KEY'] : '';
+
+        // Check if the API key and IP address are valid
+        if (!is_api_key_valid($api_key) || !is_ip_allowed($client_ip)) {
+            // Respond with a JSON response (access denied)
+            header('Content-Type: application/json');
+            echo json_encode(array(
+                'status' => 'error',
+                'message' => 'Invalid API key or IP address'
+            ));
+            exit;
+        }
+
         // Get the raw POST data
         $post_body = file_get_contents('php://input');
         $data = json_decode($post_body, true);
@@ -31,7 +60,7 @@ function handle_body_result_update() {
             update_option('body_last_updated_option', current_time('timestamp'));
         }
 
-        // Respond with a JSON response (optional)
+        // Respond with a JSON response (success)
         header('Content-Type: application/json');
         echo json_encode(array(
             'status' => 'success',
@@ -41,7 +70,7 @@ function handle_body_result_update() {
         exit;
     }
 }
-add_action('init', 'handle_body_result_update');
+add_action('init', 'handle_webhook_request');
 
 // Display the updated result, timestamp, and age check at the top of the homepage
 function display_body_result() {
