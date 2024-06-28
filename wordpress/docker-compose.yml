@@ -1,35 +1,50 @@
 version: "3.7"
 services:
- db:
-  image: mysql:8.0
-  container_name: mysql8
-  restart: always
-  environment:
-    MYSQL_ROOT_PASSWORD: password
-    MYSQL_DATABASE: db_local
-    MYSQL_USER: wp_user
-    MYSQL_PASSWORD: password
- WordPress:
-  image: wordpress:latest
-  container_name: wordpress
-  restart: always
-  depends_on:
-     - db
-  ports:
-     - 10090:80
-  environment:
-    WORDPRESS_DB_HOST: db:3306
-    WORDPRESS_DB_USER: wp_user
-    WORDPRESS_DB_PASSWORD: password
-    WORDPRESS_DB_NAME: db_local
-    WORDPRESS_DEBUG: 1
-  volumes:
-     - ./html:/var/www/html
- phpmyadmin:
-  image: phpmyadmin/phpmyadmin:latest
-  container_name: phpmyadmin_ingrid
-  restart: always
-  depends_on:
-     - db
-  ports:
-     - 10099:80
+  db:
+    image: mysql:8.0
+    container_name: mysql8
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: db_local
+      MYSQL_USER: wp_user
+      MYSQL_PASSWORD: password
+
+  wordpress:
+    image: wordpress:latest
+    container_name: wordpress
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - 10090:80
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wp_user
+      WORDPRESS_DB_PASSWORD: password
+      WORDPRESS_DB_NAME: db_local
+      WORDPRESS_DEBUG: 1
+    volumes:
+      - ./html:/var/www/html
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin_ingrid
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - 10099:80
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: always
+    ports:
+      - 10443:443
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/ssl/nginx-selfsigned.crt:/etc/ssl/nginx-selfsigned.crt
+      - ./nginx/ssl/nginx-selfsigned.key:/etc/ssl/nginx-selfsigned.key
+    depends_on:
+      - wordpress

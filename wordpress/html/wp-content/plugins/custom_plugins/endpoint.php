@@ -9,12 +9,6 @@
  */
 
  define('VALID_API_KEY', '33f2c126-2711-4690-8e0a-87bd1d8f6386');
- $allowed_ips = array('127.0.0.1', '192.168.3.104', '172.19.0.1');
-
-function is_ip_allowed($ip) {
-    global $allowed_ips;
-    return in_array($ip, $allowed_ips);
-}
 
 function is_api_key_valid($api_key) {
     return $api_key === VALID_API_KEY;
@@ -24,19 +18,17 @@ function is_api_key_valid($api_key) {
 function handle_webhook_request() {
     // Check if this is a POST request
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        // Get the client IP address
-        $client_ip = $_SERVER['REMOTE_ADDR'];
 
         // Get the API key from the request headers
         $api_key = isset($_SERVER['HTTP_X_API_KEY']) ? $_SERVER['HTTP_X_API_KEY'] : '';
 
         // Check if the API key and IP address are valid
-        if (!is_api_key_valid($api_key) || !is_ip_allowed($client_ip)) {
+        if (!is_api_key_valid($api_key)) {
             // Respond with a JSON response (access denied)
             header('Content-Type: application/json');
             echo json_encode(array(
                 'status' => 'error',
-                'message' => 'Invalid API key or IP address' . $client_ip
+                'message' => 'Invalid API key or IP address'
             ));
             exit;
         }
