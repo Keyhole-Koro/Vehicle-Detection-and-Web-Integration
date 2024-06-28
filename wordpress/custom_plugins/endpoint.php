@@ -17,18 +17,20 @@ function is_api_key_valid($api_key) {
 // Handle WebHook request to update options
 function handle_webhook_request() {
     // Check if this is a POST request
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST'
+        || $_SERVER['HTTPS'] !== 'on'
+        ) {
 
         // Get the API key from the request headers
         $api_key = isset($_SERVER['HTTP_X_API_KEY']) ? $_SERVER['HTTP_X_API_KEY'] : '';
 
-        // Check if the API key and IP address are valid
+        // Check if the API key is valid
         if (!is_api_key_valid($api_key)) {
             // Respond with a JSON response (access denied)
             header('Content-Type: application/json');
             echo json_encode(array(
                 'status' => 'error',
-                'message' => 'Invalid API key or IP address'
+                'message' => 'Invalid API key'
             ));
             exit;
         }

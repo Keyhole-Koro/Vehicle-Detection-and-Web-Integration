@@ -9,6 +9,5 @@ curl -X POST \
   -H "Content-Type: application/json" \
   -H "x-api-key: $API_KEY" \
   -d "$data" \
-  --tlsv1.2 \
   -k \
   "$URL"
