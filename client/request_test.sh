@@ -2,7 +2,9 @@
 
 source .env
 
-data='{"result":'$(shuf -i 10-20 -n 1)', "timestamp":"'"$(date -Iseconds)"'"}'
+timestamp=$(date +"%Y/%m/%d %H:%M:%S")
+
+data='{"result":'$(shuf -i 10-20 -n 1)', "timestamp":"'"$timestamp"'"}'
 
 # remove -k option on prod
 curl -X POST \
