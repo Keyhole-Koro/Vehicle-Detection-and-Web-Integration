@@ -18,7 +18,7 @@ function custom_rest_endpoint_init() {
     register_rest_route('trafficinfo/v1', '/update', array(
         'methods' => 'POST',
         'callback' => 'handle_webhook_request',
-        'permission_callback' => '__return_true', // We will handle permissions in the callback
+        'permission_callback' => '__return_true',
     ));
 }
 add_action('rest_api_init', 'custom_rest_endpoint_init');

@@ -18,7 +18,7 @@ function custom_rest_endpoint_init() {
     register_rest_route('trafficinfo/v1', '/update', array(
         'methods' => 'POST',
         'callback' => 'handle_webhook_request',
-        'permission_callback' => '__return_true', // We will handle permissions in the callback
+        'permission_callback' => '__return_true',
     ));
 }
 add_action('rest_api_init', 'custom_rest_endpoint_init');
@@ -72,7 +72,6 @@ function handle_webhook_request(WP_REST_Request $request) {
     ), 200);
 }
 
-// Display the updated result, timestamp, and age check at the top of the homepage
 function get_display_body_result() {
     $body_result = get_option('body_result_option', '0');
     $timestamp = get_option('body_timestamp_option', 'N/A');
@@ -95,7 +94,6 @@ add_action('wp_ajax_update_traffic_info', 'update_traffic_info');
 add_action('wp_ajax_nopriv_update_traffic_info', 'update_traffic_info');
 
 function update_traffic_info() {
-    // Get and echo the updated body result HTML
     $body_result_html = get_display_body_result();
     echo $body_result_html;
     wp_die();

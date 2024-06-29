@@ -1,0 +1,6 @@
+pip install --upgrade pip
+
+opencv-python-headless
+numpy
+requests
+python-dotenv

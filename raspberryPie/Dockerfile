@@ -9,8 +9,7 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --upgrade pip \
-    && pip install opencv-python-headless numpy
+RUN pip install -r requirements.txt
 
 RUN mkdir -p /app/yolo
 

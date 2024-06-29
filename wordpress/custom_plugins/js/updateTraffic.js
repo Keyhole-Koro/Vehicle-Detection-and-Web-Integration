@@ -14,5 +14,5 @@ jQuery(document).ready(function($) {
 
     updateCustomField();
 
-    setInterval(updateCustomField, 5000);
+    setInterval(updateCustomField, 60000);
 });
