@@ -8,63 +8,79 @@
   Author URI: https://github.com/Keyhole-Koro
  */
 
- define('VALID_API_KEY', '33f2c126-2711-4690-8e0a-87bd1d8f6386');
+define('VALID_API_KEY', '33f2c126-2711-4690-8e0a-87bd1d8f6386');
 
 function is_api_key_valid($api_key) {
-    return $api_key === VALID_API_KEY;
+return $api_key === VALID_API_KEY;
 }
 
-// Handle WebHook request to update options
-function handle_webhook_request() {
-    // Check if this is a POST request
-    if ($_SERVER['REQUEST_METHOD'] === 'POST'
-        || $_SERVER['HTTPS'] !== 'on'
-        ) {
+function custom_rest_endpoint_init() {
+    register_rest_route('trafficinfo/v1', '/update', array(
+        'methods' => 'POST',
+        'callback' => 'handle_webhook_request',
+        'permission_callback' => '__return_true', // We will handle permissions in the callback
+    ));
+}
+add_action('rest_api_init', 'custom_rest_endpoint_init');
 
-        // Get the API key from the request headers
-        $api_key = isset($_SERVER['HTTP_X_API_KEY']) ? $_SERVER['HTTP_X_API_KEY'] : '';
-
-        // Check if the API key is valid
-        if (!is_api_key_valid($api_key)) {
-            // Respond with a JSON response (access denied)
-            header('Content-Type: application/json');
-            echo json_encode(array(
-                'status' => 'error',
-                'message' => 'Invalid API key'
-            ));
-            exit;
-        }
-
-        // Get the raw POST data
-        $post_body = file_get_contents('php://input');
-        $data = json_decode($post_body, true);
-
-        // Check if the 'result' and 'timestamp' keys exist in the body
-        if (isset($data['result']) && isset($data['timestamp'])) {
-            // Sanitize and update options
-            $body_result = sanitize_text_field($data['result']);
-            $timestamp = sanitize_text_field($data['timestamp']);
-            update_option('body_result_option', $body_result);
-            update_option('body_timestamp_option', $timestamp);
-            update_option('body_last_updated_option', current_time('timestamp'));
-        } else {
-            // If keys are missing, update with default values
-            update_option('body_result_option', '0');
-            update_option('body_timestamp_option', 'N/A');
-            update_option('body_last_updated_option', current_time('timestamp'));
-        }
-
-        // Respond with a JSON response (success)
-        header('Content-Type: application/json');
-        echo json_encode(array(
-            'status' => 'success',
-            'body_result' => get_option('body_result_option', '0'),
-            'timestamp' => get_option('body_timestamp_option', 'N/A')
-        ));
-        exit;
+function handle_webhook_request(WP_REST_Request $request) {
+    // Check if this is a HTTPS request
+    /*
+    if (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] !== 'on') {
+        return new WP_REST_Response(array(
+            'status' => 'error',
+            'message' => 'HTTPS connection is required'
+        ), 400);
     }
+*/
+
+    // Get the API key from the request headers
+    $api_key = $request->get_header('X-API-Key');
+
+    // Check if the API key is valid
+    if (!is_api_key_valid($api_key)) {
+        return new WP_REST_Response(array(
+            'status' => 'error',
+            'message' => 'Invalid API key'
+        ), 403);
+    }
+
+    // Get the raw POST data
+    $data = $request->get_json_params();
+
+    // Check if the endpoint path is correct
+    $requested_endpoint = $request->get_route();
+    $expected_endpoint = '/trafficinfo/v1/update';
+
+    if ($requested_endpoint !== $   ) {
+        return new WP_REST_Response(array(
+            'status' => 'error',
+            'message' => 'Invalid endpoint'
+        ), 404);
+    }
+
+    // Proceed with data processing
+    if (isset($data['result']) && isset($data['timestamp'])) {
+        // Sanitize and update options
+        $body_result = sanitize_text_field($data['result']);
+        $timestamp = sanitize_text_field($data['timestamp']);
+        update_option('body_result_option', $body_result);
+        update_option('body_timestamp_option', $timestamp);
+        update_option('body_last_updated_option', current_time('timestamp'));
+    } else {
+        // If keys are missing, update with default values
+        update_option('body_result_option', '0');
+        update_option('body_timestamp_option', 'N/A');
+        update_option('body_last_updated_option', current_time('timestamp'));
+    }
+
+    // Respond with a JSON response (success)
+    return new WP_REST_Response(array(
+        'status' => 'success',
+        'body_result' => get_option('body_result_option', '0'),
+        'timestamp' => get_option('body_timestamp_option', 'N/A')
+    ), 200);
 }
-add_action('init', 'handle_webhook_request');
 
 // Display the updated result, timestamp, and age check at the top of the homepage
 function display_body_result() {
