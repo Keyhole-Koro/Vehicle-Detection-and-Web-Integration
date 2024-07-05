@@ -6,4 +6,4 @@ ring-cam/result/*
 
 wordpress/nginx/ssl
 
-vendor
+wordpress/trafficEndpoint/vendor
