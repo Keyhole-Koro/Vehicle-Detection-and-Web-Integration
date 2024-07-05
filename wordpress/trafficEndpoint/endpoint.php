@@ -8,30 +8,23 @@
   Author URI: https://github.com/Keyhole-Koro
  */
 
-require_once __DIR__ . '/vendor/autoload.php';
+$file_path = __DIR__ . '/api_keys.txt';
 
-use Dotenv\Dotenv;
+$api_keys_str = file_get_contents($file_path);
 
-$plugin_dir = plugin_dir_path(__FILE__);
-
-$dotenv = Dotenv::createImmutable($plugin_dir);
-$dotenv->load();
-
-$api_key = getenv('API_KEY');
-
-if ($api_key === false) {
-    error_log('API_KEY not set in environment variables');
+if ($api_keys_str === false) {
+    error_log('Failed to read API keys file');
     return;
 }
 
-define('VALID_API_KEY', $api_key);
-
-
-$body_result_html = "";
+$api_keys_array = explode(',', $api_keys_str);
 
 function is_api_key_valid($api_key) {
-    return $api_key === VALID_API_KEY;
+    global $api_keys_array;
+    return in_array($api_key, $api_keys_array);
 }
+
+$body_result_html = "";
 
 function custom_rest_endpoint_init() {
     register_rest_route('trafficinfo/v1', '/update', array(
@@ -58,7 +51,7 @@ function handle_webhook_request(WP_REST_Request $request) {
     if (!is_api_key_valid($api_key)) {
         return new WP_REST_Response(array(
             'status' => 'error',
-            'message' => 'Invalid API key'
+            'message' => 'Invalid API key',
         ), 403);
     }
 

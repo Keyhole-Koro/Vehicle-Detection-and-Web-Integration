@@ -7,3 +7,7 @@ ring-cam/result/*
 wordpress/nginx/ssl
 
 wordpress/trafficEndpoint/vendor
+
+*.zip
+
+trafficEndpoint/api_keys.txt
