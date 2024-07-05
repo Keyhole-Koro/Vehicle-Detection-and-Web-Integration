@@ -5,3 +5,5 @@
 ring-cam/result/*
 
 wordpress/nginx/ssl
+
+vendor
