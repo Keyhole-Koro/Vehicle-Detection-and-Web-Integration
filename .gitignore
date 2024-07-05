@@ -2,12 +2,12 @@
 
 **/node_modules
 
-/ring-cam/result/*
+ring-cam/result/*
 
-/wordpress/nginx/ssl
+wordpress/nginx/ssl
 
-/wordpress/trafficEndpoint/vendor
+wordpress/trafficEndpoint/vendor
 
 *.zip
 
-/trafficEndpoint/api_keys.txt
+wordpress/trafficEndpoint/api_keys.txt
