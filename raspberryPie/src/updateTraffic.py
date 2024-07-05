@@ -3,6 +3,7 @@ import json
 import requests
 from datetime import datetime
 import time
+import pytz
 
 from dotenv import load_dotenv
 
@@ -17,7 +18,8 @@ def updateTraffic(result):
     URL = os.getenv("WEB_SERVER_ENDPOINT")
     API_KEY = os.getenv("API_KEY")
 
-    timestamp = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+    japan_tz = pytz.timezone('Asia/Tokyo')
+    timestamp = datetime.now(japan_tz).strftime("%Y/%m/%d %H:%M:%S")
 
     data = {
         "result": result,
@@ -32,18 +34,24 @@ def updateTraffic(result):
     json_data = json.dumps(data)
 
     try:
-        response = requests.post(URL, headers=headers, data=json_data, verify=False)  # Remove verify=False in production
+        # Remove verify=False in production
+        response = requests.post(URL, headers=headers, data=json_data, verify=False)
         response.raise_for_status()
-        print("POST request successful.")
+        print(timestamp + ":" + "POST request successful.\n" + str(response.content))
     except requests.exceptions.RequestException as e:
-        print(f"Error making POST request: {e}")
+        print(f"{timestamp}: Error making POST request: {e}")
 
 if __name__ == '__main__':
+    start_time = time.time()
+
     while True:
         image_buf = fetchSnapshot()
-
         result = image_detect(image_buf)
-
         updateTraffic(result)
 
-        time.sleep(60)
+        while True:
+            elapsed_time = time.time() - start_time
+            if elapsed_time > 60:
+                start_time = time.time()
+                break
+            time.sleep(1)

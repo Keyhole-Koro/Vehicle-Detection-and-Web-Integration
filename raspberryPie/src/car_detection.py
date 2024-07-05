@@ -71,7 +71,6 @@ def image_detect(img_buffer, conf_threshold=0.5, nms_threshold=0.4):
     if image is None:
         raise ValueError("Failed to decode image from buffer.")
 
-    # Check image shape (height, width, channels)
     height, width, channels = image.shape
     if channels != 3:
         raise ValueError(f"Expected 3 channels (RGB image), but got {channels} channels.")
@@ -80,7 +79,5 @@ def image_detect(img_buffer, conf_threshold=0.5, nms_threshold=0.4):
     detections = get_box_dimensions(outputs, height, width, conf_threshold, nms_threshold)
     colors = np.random.uniform(0, 255, size=(len(classes), 3))
     car_count, truck_count = draw_labels(detections, colors, classes, image)
-
-    print(car_count + truck_count)
     
     return car_count + truck_count

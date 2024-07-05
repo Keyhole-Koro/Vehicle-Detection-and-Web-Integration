@@ -8,7 +8,27 @@
   Author URI: https://github.com/Keyhole-Koro
  */
 
-define('VALID_API_KEY', '33f2c126-2711-4690-8e0a-87bd1d8f6386');
+ require_once __DIR__ . '/vendor/autoload.php';
+
+ use Dotenv\Dotenv;
+ 
+ $plugin_dir = plugin_dir_path(__FILE__);
+ 
+ $dotenv = Dotenv::createImmutable($plugin_dir);
+ $dotenv->load();
+ 
+ $api_key = getenv('API_KEY');
+ 
+ if ($api_key === false) {
+     error_log('API_KEY not set in environment variables');
+     return;
+ }
+ 
+ define('VALID_API_KEY', $api_key);
+
+
+
+$body_result_html = "";
 
 function is_api_key_valid($api_key) {
     return $api_key === VALID_API_KEY;
@@ -61,14 +81,15 @@ function handle_webhook_request(WP_REST_Request $request) {
         update_option('body_last_updated_option', current_time('timestamp'));
     }
 
-    // Get the updated body result HTML
+    // Store the updated body result HTML in a global variable
+    global $body_result_html;
     $body_result_html = get_display_body_result();
 
     // Respond with a JSON response (success)
     return new WP_REST_Response(array(
         'status' => 'success',
         'body_result' => get_option('body_result_option', '0'),
-        'timestamp' => get_option('body_timestamp_option', 'N/A')
+        'timestamp' => get_option('body_timestamp_option', 'N/A'),
     ), 200);
 }
 
@@ -90,11 +111,14 @@ function get_display_body_result() {
     return $output;
 }
 
-add_action('wp_ajax_update_traffic_info', 'update_traffic_info');
-add_action('wp_ajax_nopriv_update_traffic_info', 'update_traffic_info');
+add_action('wp_ajax_update_traffic_info', 'get_traffic_info_html');
+add_action('wp_ajax_nopriv_update_traffic_info', 'get_traffic_info_html');
 
-function update_traffic_info() {
-    $body_result_html = get_display_body_result();
+function get_traffic_info_html() {
+    global $body_result_html;
+    if (empty($body_result_html)) {
+        $body_result_html = get_display_body_result();
+    }
     echo $body_result_html;
     wp_die();
 }
