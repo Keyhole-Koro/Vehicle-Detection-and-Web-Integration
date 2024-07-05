@@ -57,20 +57,46 @@ function handle_webhook_request(WP_REST_Request $request) {
 
     // Get the raw POST data
     $data = $request->get_json_params();
-    
+
+    if (!$data) {
+        return new WP_REST_Response(array(
+            'status' => 'error',
+            'message' => 'No data received',
+        ), 400);
+    }
+
     // Proceed with data processing
-    if (isset($data['result']) && isset($data['timestamp'])) {
+    if (isset($data['result']) && isset($data['timestamp']) && isset($data['images'])) {
         // Sanitize and update options
         $body_result = sanitize_text_field($data['result']);
         $timestamp = sanitize_text_field($data['timestamp']);
+        $images = $data['images'];
+        
+        // Store image data and remove old images
+        $upload_dir = wp_upload_dir()['path'];
+        $image_links = [];
+        foreach (glob("$upload_dir/image_*.jpg") as $old_image) {
+            unlink($old_image); // Delete old image
+        }
+        foreach ($images as $index => $image) {
+            $image_data = base64_decode($image);
+            $image_filename = "image_{$index}_" . time() . '.jpg';
+            $image_path = "$upload_dir/$image_filename";
+            file_put_contents($image_path, $image_data);
+            $image_links[] = wp_upload_dir()['url'] . "/$image_filename";
+        }
+
+        // Update options
         update_option('body_result_option', $body_result);
         update_option('body_timestamp_option', $timestamp);
         update_option('body_last_updated_option', current_time('timestamp'));
+        update_option('body_image_links_option', $image_links);
+
     } else {
-        // If keys are missing, update with default values
-        update_option('body_result_option', '0');
-        update_option('body_timestamp_option', 'N/A');
-        update_option('body_last_updated_option', current_time('timestamp'));
+        return new WP_REST_Response(array(
+            'status' => 'error',
+            'message' => 'Missing required fields',
+        ), 400);
     }
 
     // Store the updated body result HTML in a global variable
@@ -89,13 +115,17 @@ function get_display_body_result() {
     $body_result = get_option('body_result_option', '0');
     $timestamp = get_option('body_timestamp_option', 'N/A');
     $last_updated = get_option('body_last_updated_option', 0);
+    $image_links = get_option('body_image_links_option', []);
 
     ob_start();
 
     echo '<div style="background-color: #f0f0f0; padding: 20px; text-align: center; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">';
     echo '<h2 style="font-size: 24px; margin-bottom: 10px;">The current number of waiting trucks: ' . esc_html($body_result) . '</h2>';
     echo '<p style="font-size: 18px; color: #666;">Last updated: ' . date('Y-m-d H:i:s', $last_updated) . '</p>';
-
+    echo '<h3>Detected Images:</h3>';
+    foreach ($image_links as $link) {
+        echo '<img src="' . esc_url($link) . '" style="max-width: 100%; height: auto; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" />';
+    }
     echo '</div>';
 
     $output = ob_get_clean();
@@ -120,5 +150,4 @@ function enqueue_custom_scripts() {
     wp_localize_script('updateTraffic', 'ajaxurl', array('ajaxurl' => admin_url('admin-ajax.php')));
 }
 add_action('wp_enqueue_scripts', 'enqueue_custom_scripts');
-
 ?>
