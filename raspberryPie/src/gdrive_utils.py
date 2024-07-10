@@ -102,7 +102,7 @@ def create_folder(folder_name, user_email):
         return None
 
 if __name__ == "__main__":
-    user_email = "korokororin47@gmail.com"
+    user_email = "xxx@gmail.com"
     folder_name = "car-detection-test-folder"
     folder_id = create_folder_if_not_exists(folder_name, user_email)
 
