@@ -12,4 +12,4 @@ wordpress/trafficEndpoint/vendor
 
 wordpress/trafficEndpoint/api_keys.txt
 
-car_detection/raspberryPie/token.json
+car_detection/raspberryPie/result/*

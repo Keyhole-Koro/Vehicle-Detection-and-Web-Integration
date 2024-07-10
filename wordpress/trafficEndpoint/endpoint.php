@@ -87,6 +87,10 @@ function handle_webhook_request(WP_REST_Request $request) {
             file_put_contents($image_path, $image_data);
             $image_links[] = wp_upload_dir()['url'] . "/$image_filename";
         }
+        
+        foreach (glob("$upload_dir/annotated_image_*.jpg") as $old_image) {
+            unlink($old_image); // Delete old image
+        }
 
         // Store annotated images
         $annotated_image_links = [];
