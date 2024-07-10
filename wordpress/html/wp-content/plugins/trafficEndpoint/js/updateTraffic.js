@@ -1,18 +1,34 @@
 jQuery(document).ready(function($) {
-    function updateCustomField() {
+    function updateTrafficInfo(action, targetClass) {
         $.ajax({
             url: ajaxurl.ajaxurl,
             type: 'POST',
             data: {
-                action: 'update_traffic_info'
+                action: action
             },
             success: function(response) {
-                $('.traffic-info').html(response);
+                $(targetClass).html(response);
             }
         });
     }
 
-    updateCustomField();
+    // Update regular traffic info
+    function updateRegularTrafficInfo() {
+        updateTrafficInfo('update_traffic_info', '.traffic-info');
+    }
 
-    setInterval(updateCustomField, 60000);
+    // Update admin traffic info
+    function updateAdminTrafficInfo() {
+        updateTrafficInfo('admin_update_traffic_info', '.admin-traffic-info');
+    }
+
+    // Initial update
+    updateRegularTrafficInfo();
+    updateAdminTrafficInfo();
+
+    // Set interval for regular traffic info update
+    setInterval(updateRegularTrafficInfo, 60000);
+
+    // Set interval for admin traffic info update
+    setInterval(updateAdminTrafficInfo, 60000);
 });

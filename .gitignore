@@ -11,3 +11,5 @@ wordpress/trafficEndpoint/vendor
 *.zip
 
 wordpress/trafficEndpoint/api_keys.txt
+
+car_detection/raspberryPie/token.json

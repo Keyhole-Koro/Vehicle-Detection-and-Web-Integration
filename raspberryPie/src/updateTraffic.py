@@ -5,29 +5,17 @@ from datetime import datetime, time as dt_time
 import time
 import pytz
 import base64
-import csv
+import cv2
 
 from dotenv import load_dotenv
 
 from snapshot import fetchSnapshot
 from car_detection import image_detect
 from email_utils import send_error_email
+from gdrive_utils import upload_to_gdrive
+from logger import log_to_csv
 
-def log_to_csv(timestamp, result, status, message):
-    log_file_path = os.getenv("LOG_FILE_PATH")
-    
-    if not log_file_path:
-        raise ValueError("LOG_FILE_PATH environment variable is not set")
-
-    log_exists = os.path.isfile(log_file_path)
-
-    with open(log_file_path, mode='a', newline='') as file:
-        writer = csv.writer(file)
-        if not log_exists:
-            writer.writerow(["timestamp", "result", "status", "message"])
-        writer.writerow([timestamp, result, status, message])
-
-def updateTraffic(result, imgs):
+def updateTraffic(result, imgs, annotated_imgs):
     dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
     load_dotenv(dotenv_path)
 
@@ -38,12 +26,21 @@ def updateTraffic(result, imgs):
     japan_tz = pytz.timezone('Asia/Tokyo')
     timestamp = datetime.now(japan_tz).strftime("%Y/%m/%d %H:%M:%S")
 
+    # Prepare base64 encoded image data
     encoded_imgs = [base64.b64encode(image).decode('utf-8') for image in imgs]
+    encoded_annotated_imgs = []
+
+    for annotated_img in annotated_imgs:
+        # Encode annotated_img to base64
+        _, buffer = cv2.imencode('.jpg', annotated_img)
+        encoded_image = base64.b64encode(buffer).decode('utf-8')
+        encoded_annotated_imgs.append(encoded_image)
 
     data = {
         "result": result,
         "timestamp": timestamp,
-        "images": encoded_imgs
+        "images": encoded_imgs,
+        "annotated_images": encoded_annotated_imgs,  # Include base64 encoded annotated_images
     }
 
     headers = {
@@ -66,7 +63,7 @@ def updateTraffic(result, imgs):
         error_message = f"{timestamp}: Error making POST request: {e}"
         log_to_csv(timestamp, result, "error", error_message)
         print(error_message)
-        send_error_email(error_message)
+        #send_error_email(error_message)
 
 def is_within_time_range(start_time_str, end_time_str):
     japan_tz = pytz.timezone('Asia/Tokyo')
@@ -89,6 +86,17 @@ def wait_until_start_time(start_time_str):
             break
         time.sleep(60)
 
+def upload_log_if_needed():
+    dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+    load_dotenv(dotenv_path)
+
+    END_TIME = os.getenv("END_TIME")
+    LOG_FILE_PATH = os.getenv("LOG_FILE_PATH")
+    GDRIVE_FOLDER_ID = os.getenv("GDRIVE_FOLDER_ID")
+
+    if not is_within_time_range("00:00", END_TIME):
+        upload_to_gdrive(LOG_FILE_PATH, GDRIVE_FOLDER_ID)
+
 if __name__ == '__main__':
     dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
     load_dotenv(dotenv_path)
@@ -99,12 +107,15 @@ if __name__ == '__main__':
     start_time = time.time()
     while True:
         if is_within_time_range(START_TIME, END_TIME):
-            result = 0
+            sum_result = 0
+            annotatedImages = []
             image_bufs = fetchSnapshot()
             for image_buf in image_bufs:
-                result += image_detect(image_buf)
+                (annotated_img, result) = image_detect(image_buf)
+                annotatedImages.append(annotated_img)
+                sum_result += result
 
-            updateTraffic(result, image_bufs)
+            updateTraffic(sum_result, image_bufs, annotatedImages)
 
             while True:
                 elapsed_time = time.time() - start_time
@@ -113,4 +124,5 @@ if __name__ == '__main__':
                     break
 
         else:
+            upload_log_if_needed()
             wait_until_start_time(START_TIME)

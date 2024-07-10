@@ -25,6 +25,7 @@ function is_api_key_valid($api_key) {
 }
 
 $body_result_html = "";
+$admin_body_result_html = "";
 
 function custom_rest_endpoint_init() {
     register_rest_route('trafficinfo/v1', '/update', array(
@@ -36,7 +37,7 @@ function custom_rest_endpoint_init() {
 add_action('rest_api_init', 'custom_rest_endpoint_init');
 
 function handle_webhook_request(WP_REST_Request $request) {
-    // Check if this is a HTTPS request
+    // Check if this is an HTTPS request
     if (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] !== 'on') {
         return new WP_REST_Response(array(
             'status' => 'error',
@@ -66,11 +67,12 @@ function handle_webhook_request(WP_REST_Request $request) {
     }
 
     // Proceed with data processing
-    if (isset($data['result']) && isset($data['timestamp']) && isset($data['images'])) {
+    if (isset($data['result']) && isset($data['timestamp']) && isset($data['images']) && isset($data['annotated_images'])) {
         // Sanitize and update options
         $body_result = sanitize_text_field($data['result']);
         $timestamp = sanitize_text_field($data['timestamp']);
         $images = $data['images'];
+        $annotated_images = $data['annotated_images'];
         
         // Store image data and remove old images
         $upload_dir = wp_upload_dir()['path'];
@@ -86,22 +88,33 @@ function handle_webhook_request(WP_REST_Request $request) {
             $image_links[] = wp_upload_dir()['url'] . "/$image_filename";
         }
 
+        // Store annotated images
+        $annotated_image_links = [];
+        foreach ($annotated_images as $index => $annotated_image) {
+            $annotated_data = base64_decode($annotated_image);
+            $annotated_filename = "annotated_image_{$index}_" . time() . '.jpg';
+            $annotated_path = "$upload_dir/$annotated_filename";
+            file_put_contents($annotated_path, $annotated_data);
+            $annotated_image_links[] = wp_upload_dir()['url'] . "/$annotated_filename";
+        }
+
         // Update options
         update_option('body_result_option', $body_result);
         update_option('body_timestamp_option', $timestamp);
         update_option('body_last_updated_option', current_time('timestamp'));
         update_option('body_image_links_option', $image_links);
+        update_option('body_annotated_image_links_option', $annotated_image_links);
 
+        // Update HTML outputs
+        global $body_result_html, $admin_body_result_html;
+        $body_result_html = get_display_body_result('body_image_links_option');
+        $admin_body_result_html = get_display_body_result('body_annotated_image_links_option');
     } else {
         return new WP_REST_Response(array(
             'status' => 'error',
             'message' => 'Missing required fields',
         ), 400);
     }
-
-    // Store the updated body result HTML in a global variable
-    global $body_result_html;
-    $body_result_html = get_display_body_result();
 
     // Respond with a JSON response (success)
     return new WP_REST_Response(array(
@@ -111,19 +124,22 @@ function handle_webhook_request(WP_REST_Request $request) {
     ), 200);
 }
 
-function get_display_body_result() {
-    $body_result = get_option('body_result_option', '0');
-    $timestamp = get_option('body_timestamp_option', 'N/A');
-    $last_updated = get_option('body_last_updated_option', 0);
-    $image_links = get_option('body_image_links_option', []);
+function get_display_body_result($option_name) {
+    $option_value = get_option($option_name, []);
 
     ob_start();
 
     echo '<div style="background-color: #f0f0f0; padding: 20px; text-align: center; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">';
-    echo '<h2 style="font-size: 24px; margin-bottom: 10px;">The current number of waiting trucks: ' . esc_html($body_result) . '</h2>';
-    echo '<p style="font-size: 18px; color: #666;">Last updated: ' . date('Y-m-d H:i:s', $last_updated) . '</p>';
-    echo '<h3>Detected Images:</h3>';
-    foreach ($image_links as $link) {
+    echo '<h2 style="font-size: 24px; margin-bottom: 10px;">The current number of waiting trucks: ' . esc_html(get_option('body_result_option', '0')) . '</h2>';
+    echo '<p style="font-size: 18px; color: #666;">Last updated: ' . date('Y-m-d H:i:s', get_option('body_last_updated_option', 0)) . '</p>';
+    
+    if ($option_name === 'body_image_links_option') {
+        echo '<h3>Detected Images:</h3>';
+    } elseif ($option_name === 'body_annotated_image_links_option') {
+        echo '<h3>Annotated Images:</h3>';
+    }
+
+    foreach ($option_value as $link) {
         echo '<img src="' . esc_url($link) . '" style="max-width: 100%; height: auto; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" />';
     }
     echo '</div>';
@@ -133,15 +149,28 @@ function get_display_body_result() {
     return $output;
 }
 
+// PHP code remains unchanged as previously provided
 add_action('wp_ajax_update_traffic_info', 'get_traffic_info_html');
 add_action('wp_ajax_nopriv_update_traffic_info', 'get_traffic_info_html');
 
 function get_traffic_info_html() {
     global $body_result_html;
     if (empty($body_result_html)) {
-        $body_result_html = get_display_body_result();
+        $body_result_html = get_display_body_result('body_image_links_option');
     }
     echo $body_result_html;
+    wp_die();
+}
+
+add_action('wp_ajax_admin_update_traffic_info', 'get_admin_traffic_info_html');
+add_action('wp_ajax_nopriv_admin_update_traffic_info', 'get_admin_traffic_info_html');
+
+function get_admin_traffic_info_html() {
+    global $admin_body_result_html;
+    if (empty($admin_body_result_html)) {
+        $admin_body_result_html = get_display_body_result('body_annotated_image_links_option');
+    }
+    echo $admin_body_result_html;
     wp_die();
 }
 

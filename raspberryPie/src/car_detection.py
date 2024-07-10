@@ -61,7 +61,7 @@ def draw_labels(detections, colors, classes, img):
         color = colors[class_id]
         cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
         cv2.putText(img, label, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-    return car_count, truck_count
+    return img, car_count, truck_count
 
 def image_detect(img_buffer, conf_threshold=0.5, nms_threshold=0.4):
     model, classes, output_layers = load_yolo()
@@ -78,6 +78,6 @@ def image_detect(img_buffer, conf_threshold=0.5, nms_threshold=0.4):
     blob, outputs = detect_objects(image, model, output_layers)
     detections = get_box_dimensions(outputs, height, width, conf_threshold, nms_threshold)
     colors = np.random.uniform(0, 255, size=(len(classes), 3))
-    car_count, truck_count = draw_labels(detections, colors, classes, image)
+    annotated_image, car_count, truck_count = draw_labels(detections, colors, classes, image)
     
-    return car_count + truck_count
+    return annotated_image, car_count + truck_count
