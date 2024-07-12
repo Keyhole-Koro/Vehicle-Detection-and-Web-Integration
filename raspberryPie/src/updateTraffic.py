@@ -66,6 +66,9 @@ def updateTraffic(result, imgs, annotated_imgs):
         #send_error_email(error_message)
 
 def is_within_time_range(start_time_str, end_time_str):
+    STAGE = os.getenv("STAGE")
+    if STAGE == 'DEV':
+        return True
     japan_tz = pytz.timezone('Asia/Tokyo')
     current_time = datetime.now(japan_tz).time()
 
@@ -94,8 +97,8 @@ def upload_log_if_needed():
     LOG_FILE_PATH = os.getenv("LOG_FILE_PATH")
     GDRIVE_FOLDER_ID = os.getenv("GDRIVE_FOLDER_ID")
 
-    if not is_within_time_range("00:00", END_TIME):
-        upload_to_gdrive(LOG_FILE_PATH, GDRIVE_FOLDER_ID)
+    #if not is_within_time_range("00:00", END_TIME):
+        #upload_to_gdrive(LOG_FILE_PATH, GDRIVE_FOLDER_ID)
 
 if __name__ == '__main__':
     dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')

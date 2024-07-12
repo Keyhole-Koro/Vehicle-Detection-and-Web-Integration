@@ -8,6 +8,12 @@
   Author URI: https://github.com/Keyhole-Koro
  */
 
+require_once __DIR__ . '/vendor/autoload.php'; // Adjust path to autoload.php as per your setup
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+
 $file_path = __DIR__ . '/api_keys.txt';
 
 $api_keys_str = file_get_contents($file_path);
@@ -56,6 +62,8 @@ function handle_webhook_request(WP_REST_Request $request) {
         ), 403);
     }
 
+    update_option('last_request_timestamp', current_time('timestamp'));
+  
     // Get the raw POST data
     $data = $request->get_json_params();
 
@@ -87,7 +95,7 @@ function handle_webhook_request(WP_REST_Request $request) {
             file_put_contents($image_path, $image_data);
             $image_links[] = wp_upload_dir()['url'] . "/$image_filename";
         }
-        
+
         foreach (glob("$upload_dir/annotated_image_*.jpg") as $old_image) {
             unlink($old_image); // Delete old image
         }
@@ -143,9 +151,12 @@ function get_display_body_result($option_name) {
         echo '<h3>Annotated Images:</h3>';
     }
 
+    echo '<div style="overflow-x: auto; white-space: nowrap;">';
     foreach ($option_value as $link) {
-        echo '<img src="' . esc_url($link) . '" style="max-width: 100%; height: auto; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" />';
+        echo '<img src="' . esc_url($link) . '" style="max-height: 200px; display: inline-block; margin: 0 10px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" />';
     }
+    echo '</div>';
+
     echo '</div>';
 
     $output = ob_get_clean();
@@ -178,9 +189,71 @@ function get_admin_traffic_info_html() {
     wp_die();
 }
 
+// timer below
+function check_webhook_activity_function() {
+    $last_request_time = get_option('last_request_timestamp');
+    $current_time = current_time('timestamp');
+
+    // Set the time window (e.g., 10 minutes)
+    $time_window = 10 * 60; // 10 minutes in seconds
+
+    // Set the start and end time for the checking window
+    $start_time = strtotime('05:00:00'); // Start time
+    $end_time = strtotime('24:00:00'); // End time
+
+    if ($current_time >= $start_time && $current_time <= $end_time) {
+        if ($current_time - $last_request_time > $time_window) {
+            send_error_email_notification();
+        }
+    }
+
+    return array('status' => 'success', 'message' => 'Webhook activity checked.');
+}
+add_action('wp_ajax_check_webhook_activity', 'check_webhook_activity_function');
+add_action('wp_ajax_nopriv_check_webhook_activity', 'check_webhook_activity_function');
+
+function send_error_email_notification() {
+    $to = 'korokororin47@gmail.com';
+    $subject = 'Webhook Activity Alert';
+    $message = 'No webhook requests have been received in the last 10 minutes.';
+    $headers = array('Content-Type: text/html; charset=UTF-8');
+    
+    wp_mail($to, $subject, $message, $headers);
+}
+
+function ag_send_mail_smtp($phpmailer)
+{
+    error_log("!!!!!!!!!" . getenv('SMTP_USERNAME'));
+    $phpmailer->isSMTP();
+    $phpmailer->Host       = getenv('SMTP_HOST');
+    $phpmailer->SMTPAuth   = true;
+    $phpmailer->Port       = getenv('SMTP_PORT');
+    $phpmailer->Username   = getenv('SMTP_USERNAME');
+    $phpmailer->Password   = getenv('SMTP_PASSWORD');
+    $phpmailer->SMTPSecure = getenv('SMTP_SECURE');
+    $phpmailer->From       = getenv('SMTP_FROM');
+    $phpmailer->FromName   = getenv('SMTP_FROM_NAME');
+    $phpmailer->SMTPDebug  = 0;
+}
+add_action("phpmailer_init", "ag_send_mail_smtp");
+
+add_action("phpmailer_init", "ag_send_mail_smtp");
+
+add_filter("wp_mail_from", function( $email ){
+    return get_option('admin_email');
+});
+add_filter("wp_mail_from_name", function( $name ){
+    return get_option('blogname');
+});
+
+
 function enqueue_custom_scripts() {
+    wp_enqueue_script('timer', plugin_dir_url(__FILE__) . 'js/timer.js', array('jquery'), null, true);
     wp_enqueue_script('updateTraffic', plugin_dir_url(__FILE__) . 'js/updateTraffic.js', array('jquery'), null, true);
+    wp_localize_script('timer', 'ajaxurl', array('ajaxurl' => admin_url('admin-ajax.php')));
     wp_localize_script('updateTraffic', 'ajaxurl', array('ajaxurl' => admin_url('admin-ajax.php')));
 }
 add_action('wp_enqueue_scripts', 'enqueue_custom_scripts');
+
+
 ?>
