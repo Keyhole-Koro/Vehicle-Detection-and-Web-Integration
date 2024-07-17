@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 from snapshot import getSnapshot
 from car_detection import image_detect
 from email_utils import send_error_email
-from gdrive_utils import upload_to_gdrive
 from logger import log_to_csv
 
 def updateTraffic(result, imgs, annotated_imgs):
@@ -114,7 +113,6 @@ if __name__ == '__main__':
             annotatedImages = []
             image_bufs = getSnapshot()
             for image_buf in image_bufs:
-                print(type(image_buf))
                 (annotated_img, result) = image_detect(image_buf)
                 annotatedImages.append(annotated_img)
                 sum_result += result

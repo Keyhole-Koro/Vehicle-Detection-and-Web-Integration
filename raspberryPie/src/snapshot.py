@@ -7,6 +7,8 @@ from pathlib import Path
 
 from ring_doorbell import Auth, AuthenticationError, Requires2FAError, Ring
 
+from email_utils import send_error_email
+
 dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
 load_dotenv(dotenv_path)
 
@@ -23,15 +25,14 @@ def otp_callback():
     auth_code = input("2FA code: ")
     return auth_code
 
-
 def do_auth():
     auth = Auth(user_agent, None, token_updated)
     try:
         auth.fetch_token(RING_EMAIL, RING_PASSWORD)
     except Requires2FAError:
         auth.fetch_token(RING_EMAIL, RING_PASSWORD, otp_callback())
+        send_email("Ring Token has been updated", "If you receive 2FA code, enter the code via ssh.")
     return auth
-
 
 def getSnapshot():
     if cache_file.is_file():  # auth token is cached

@@ -13,10 +13,7 @@ require_once __DIR__ . '/vendor/autoload.php'; // Adjust path to autoload.php as
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
-
-$file_path = __DIR__ . '/api_keys.txt';
-
-$api_keys_str = file_get_contents($file_path);
+$api_keys_str = $_ENV['API_KEYS'];
 
 if ($api_keys_str === false) {
     error_log('Failed to read API keys file');

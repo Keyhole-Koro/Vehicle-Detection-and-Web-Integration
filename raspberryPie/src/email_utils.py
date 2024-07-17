@@ -4,7 +4,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
 
-def send_error_email(error_message):
+def send_email(subject, body):
     dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
     load_dotenv(dotenv_path)
 
@@ -17,9 +17,8 @@ def send_error_email(error_message):
     msg = MIMEMultipart()
     msg['From'] = EMAIL_ADDRESS
     msg['To'] = ', '.join(EMAIL_RECIPIENTS)
-    msg['Subject'] = "Error Notification: POST Request Failure"
+    msg['Subject'] = subject
 
-    body = f"An error occurred during the POST request:\n\n{error_message}"
     msg.attach(MIMEText(body, 'plain'))
 
     try:
@@ -27,6 +26,9 @@ def send_error_email(error_message):
             server.starttls()
             server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
             server.sendmail(EMAIL_ADDRESS, EMAIL_RECIPIENTS, msg.as_string())
-        print("Error email sent successfully.")
+        print(f"Email '{subject}' sent successfully.")
     except Exception as e:
-        print(f"Failed to send error email: {e}")
+        print(f"Failed to send email '{subject}': {e}")
+
+def send_error_email(error_message):
+    send_email("Error Notification: POST Request Failure", error_message)

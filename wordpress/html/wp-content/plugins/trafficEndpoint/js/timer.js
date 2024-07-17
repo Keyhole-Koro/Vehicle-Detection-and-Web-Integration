@@ -16,7 +16,7 @@ jQuery(document).ready(function($) {
     }
     
     // Initial check
-    checkWebhookActivity();
+    //checkWebhookActivity();
 
     // Check every 5 minutes (300000 milliseconds)
     //setInterval(checkWebhookActivity, 300000); // Adjust the interval as needed
