@@ -24,7 +24,7 @@ def detect_objects(img, net, outputLayers):
     outputs = net.forward(outputLayers)
     return blob, outputs
 
-def get_box_dimensions(outputs, height, width, conf_threshold=0.5, nms_threshold=0.4):
+'''def get_box_dimensions(outputs, height, width, conf_threshold=0.5, nms_threshold=0.4):
     boxes = []
     confs = []
     class_ids = []
@@ -45,7 +45,37 @@ def get_box_dimensions(outputs, height, width, conf_threshold=0.5, nms_threshold
                 class_ids.append(class_id)
     indices = cv2.dnn.NMSBoxes(boxes, confs, conf_threshold, nms_threshold)
     return [(boxes[i], confs[i], class_ids[i]) for i in indices.flatten()]
+'''
 
+def get_box_dimensions(outputs, height, width, conf_threshold, nms_threshold):
+    boxes = []
+    confs = []
+    class_ids = []
+
+    for output in outputs:
+        for detect in output:
+            scores = detect[5:]
+            class_id = np.argmax(scores)
+            confidence = scores[class_id]
+
+            if confidence > conf_threshold:
+                center_x = int(detect[0] * width)
+                center_y = int(detect[1] * height)
+                w = int(detect[2] * width)
+                h = int(detect[3] * height)
+
+                x = int(center_x - w / 2)
+                y = int(center_y - h / 2)
+
+                boxes.append([x, y, w, h])
+                confs.append(float(confidence))
+                class_ids.append(class_id)
+
+    indices = cv2.dnn.NMSBoxes(boxes, confs, conf_threshold, nms_threshold)
+    indices = np.array(indices)  # Convert to NumPy array if necessary
+
+    return [(boxes[i], confs[i], class_ids[i]) for i in indices.flatten()]
+    
 def draw_labels(detections, colors, classes, img):
     car_count = 0
     truck_count = 0

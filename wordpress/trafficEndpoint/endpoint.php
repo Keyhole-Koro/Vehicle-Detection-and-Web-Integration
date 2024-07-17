@@ -201,11 +201,11 @@ function check_webhook_activity_function() {
     $start_time = strtotime('05:00:00'); // Start time
     $end_time = strtotime('24:00:00'); // End time
 
-    if ($current_time >= $start_time && $current_time <= $end_time) {
-        if ($current_time - $last_request_time > $time_window) {
+    //if ($current_time >= $start_time && $current_time <= $end_time) {
+        //if ($current_time - $last_request_time > $time_window) {
             send_error_email_notification();
-        }
-    }
+        //}
+    //}
 
     return array('status' => 'success', 'message' => 'Webhook activity checked.');
 }
@@ -223,19 +223,17 @@ function send_error_email_notification() {
 
 function ag_send_mail_smtp($phpmailer)
 {
-    error_log("!!!!!!!!!" . getenv('SMTP_USERNAME'));
-    $phpmailer->isSMTP();
-    $phpmailer->Host       = getenv('SMTP_HOST');
+    error_log("send");
+    $phpmailer->Host       = $_ENV['SMTP_HOST'];
     $phpmailer->SMTPAuth   = true;
-    $phpmailer->Port       = getenv('SMTP_PORT');
-    $phpmailer->Username   = getenv('SMTP_USERNAME');
-    $phpmailer->Password   = getenv('SMTP_PASSWORD');
-    $phpmailer->SMTPSecure = getenv('SMTP_SECURE');
-    $phpmailer->From       = getenv('SMTP_FROM');
-    $phpmailer->FromName   = getenv('SMTP_FROM_NAME');
+    $phpmailer->Port       = $_ENV['SMTP_PORT'];
+    $phpmailer->Username   = $_ENV['SMTP_USERNAME'];
+    $phpmailer->Password   = $_ENV['SMTP_PASSWORD'];
+    $phpmailer->SMTPSecure = $_ENV['SMTP_SECURE'];
+    $phpmailer->From       = $_ENV['SMTP_FROM'];
+    $phpmailer->FromName   = $_ENV['SMTP_FROM_NAME'];
     $phpmailer->SMTPDebug  = 0;
 }
-add_action("phpmailer_init", "ag_send_mail_smtp");
 
 add_action("phpmailer_init", "ag_send_mail_smtp");
 

@@ -40,3 +40,23 @@ pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-
 python3 quickstart.py
 ```
 
+```
+replace 
+
+def get_snapshot(self, retries=3, delay=1):
+        """Take a snapshot and download it"""
+        try:
+            url = SNAPSHOT_TIMESTAMP_ENDPOINT
+            payload = {"doorbot_ids": [self._attrs.get("id")]}
+            self._ring.query(url, method="POST", json=payload)
+            request_time = time.time()
+            for _ in range(retries):
+                time.sleep(delay)
+                response = self._ring.query(url, method="POST", json=payload).json()
+                return self._ring.query(
+                    SNAPSHOT_ENDPOINT.format(self._attrs.get("id"))
+                    ).content
+            return False
+        except:
+            return False
+```

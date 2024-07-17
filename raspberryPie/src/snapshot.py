@@ -1,19 +1,55 @@
+import getpass
+import json
+import os
 import requests
-import numpy as np
+from dotenv import load_dotenv
+from pathlib import Path
 
-def fetchSnapshot(urls = ['https://img1.wsimg.com/isteam/ip/e2cee288-4555-474a-aa0b-21382ac1a006/AB-Tests-for-Low-Traffic-Sites-few-cars-on-roa.png', 
-'https://media.licdn.com/dms/image/C5112AQFEvUvPobiSQw/article-cover_image-shrink_720_1280/0/1531285631513?e=2147483647&v=beta&t=aBO7TLyO9y6hohWi7I2ajfhqULSeKNkP5o_4jNsjFbA' ,
-'https://i.ytimg.com/vi/W9ok4mD-98E/maxresdefault.jpg'
-]):
-    images = []
-    for url in urls:
+from ring_doorbell import Auth, AuthenticationError, Requires2FAError, Ring
+
+dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+load_dotenv(dotenv_path)
+
+RING_EMAIL = os.getenv("RING_EMAIL")
+RING_PASSWORD = os.getenv("RING_PASSWORD")
+
+user_agent = "garage_cam-1.0"
+cache_file = Path(user_agent + ".token.cache")
+
+def token_updated(token):
+    cache_file.write_text(json.dumps(token))
+
+def otp_callback():
+    auth_code = input("2FA code: ")
+    return auth_code
+
+
+def do_auth():
+    auth = Auth(user_agent, None, token_updated)
+    try:
+        auth.fetch_token(RING_EMAIL, RING_PASSWORD)
+    except Requires2FAError:
+        auth.fetch_token(RING_EMAIL, RING_PASSWORD, otp_callback())
+    return auth
+
+
+def getSnapshot():
+    if cache_file.is_file():  # auth token is cached
+        auth = Auth(user_agent, json.loads(cache_file.read_text()), token_updated)
+        ring = Ring(auth)
         try:
-            response = requests.get(url, stream=True)
-            if response.status_code == 200:
-                images.append(np.frombuffer(response.content, np.uint8))
-            else:
-                print(f"Failed to fetch image from {url}")
-        except Exception as e:
-            print(f"An error occurred while fetching image from {url}: {e}")
-    return images
+            ring.create_session()  # auth token still valid
+        except AuthenticationError:  # auth token has expired
+            auth = do_auth()
+    else:
+        auth = do_auth()  # Get new auth token
+        ring = Ring(auth)
 
+    ring.update_data()
+
+    devices = ring.devices()
+    doorbell = devices['stickup_cams'][0]
+
+    snapshot = doorbell.get_snapshot()
+    
+    return [snapshot]

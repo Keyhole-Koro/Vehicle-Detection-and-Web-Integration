@@ -9,7 +9,7 @@ import cv2
 
 from dotenv import load_dotenv
 
-from snapshot import fetchSnapshot
+from snapshot import getSnapshot
 from car_detection import image_detect
 from email_utils import send_error_email
 from gdrive_utils import upload_to_gdrive
@@ -112,8 +112,9 @@ if __name__ == '__main__':
         if is_within_time_range(START_TIME, END_TIME):
             sum_result = 0
             annotatedImages = []
-            image_bufs = fetchSnapshot()
+            image_bufs = getSnapshot()
             for image_buf in image_bufs:
+                print(type(image_buf))
                 (annotated_img, result) = image_detect(image_buf)
                 annotatedImages.append(annotated_img)
                 sum_result += result
