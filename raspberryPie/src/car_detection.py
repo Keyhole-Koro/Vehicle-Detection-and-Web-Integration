@@ -7,8 +7,8 @@ import requests
 import json
 
 def load_yolo():
-    net = cv2.dnn.readNet("/yolo/yolov3-tiny.weights", "/yolo/yolov3-tiny.cfg")
-    with open("/yolo/coco.names", "r") as f:
+    net = cv2.dnn.readNet("yolo/yolov3-tiny.weights", "yolo/yolov3-tiny.cfg")
+    with open("yolo/coco.names", "r") as f:
         classes = [line.strip() for line in f.readlines()]
     layer_names = net.getLayerNames()
     unconnected_out_layers = net.getUnconnectedOutLayers()
