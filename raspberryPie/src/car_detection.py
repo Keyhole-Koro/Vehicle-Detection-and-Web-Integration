@@ -7,8 +7,8 @@ import requests
 import json
 
 def load_yolo():
-    net = cv2.dnn.readNet("/app/yolo/yolov3.weights", "/app/yolo/yolov3.cfg")
-    with open("/app/yolo/coco.names", "r") as f:
+    net = cv2.dnn.readNet("/yolo/yolov3-tiny.weights", "/yolo/yolov3-tiny.cfg")
+    with open("/yolo/coco.names", "r") as f:
         classes = [line.strip() for line in f.readlines()]
     layer_names = net.getLayerNames()
     unconnected_out_layers = net.getUnconnectedOutLayers()
@@ -75,7 +75,7 @@ def get_box_dimensions(outputs, height, width, conf_threshold, nms_threshold):
     indices = np.array(indices)  # Convert to NumPy array if necessary
 
     return [(boxes[i], confs[i], class_ids[i]) for i in indices.flatten()]
-    
+
 def draw_labels(detections, colors, classes, img):
     car_count = 0
     truck_count = 0

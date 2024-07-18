@@ -17,3 +17,5 @@ car_detection/raspberryPie/result/*
 wordpress/html/wp-content/uploads/*
 
 *.cache
+
+/workspaces/car_detection/raspberryPie/yolo/*

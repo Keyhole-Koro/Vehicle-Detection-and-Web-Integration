@@ -1,17 +1,19 @@
-pip install --upgrade pip
-
-opencv-python-headless
-numpy
-requests
-python-dotenv
-pytz
-
-google-auth
-google-auth-oauthlib
-google-auth-httplib2
-google-api-python-client
-
-pip install --upgrade
-google-auth-oauthlib
-google-auth-httplib2
-google-auth
+pip install --upgrade pip \
+\
+opencv-python-headless \
+numpy \
+requests \
+python-dotenv \
+pytz \
+\
+google-auth \
+google-auth-oauthlib \
+google-auth-httplib2 \
+google-api-python-client \
+\
+pip install --upgrade \
+google-auth-oauthlib \
+google-auth-httplib2 \
+google-auth \
+\
+--break-system-packages

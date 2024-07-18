@@ -7,7 +7,7 @@ from pathlib import Path
 
 from ring_doorbell import Auth, AuthenticationError, Requires2FAError, Ring
 
-from email_utils import send_error_email
+from email_utils import send_email
 
 dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
 load_dotenv(dotenv_path)
@@ -30,8 +30,8 @@ def do_auth():
     try:
         auth.fetch_token(RING_EMAIL, RING_PASSWORD)
     except Requires2FAError:
-        auth.fetch_token(RING_EMAIL, RING_PASSWORD, otp_callback())
         send_email("Ring Token has been updated", "If you receive 2FA code, enter the code via ssh.")
+        auth.fetch_token(RING_EMAIL, RING_PASSWORD, otp_callback())
     return auth
 
 def getSnapshot():
@@ -46,11 +46,18 @@ def getSnapshot():
         auth = do_auth()  # Get new auth token
         ring = Ring(auth)
 
-    ring.update_data()
-
-    devices = ring.devices()
-    doorbell = devices['stickup_cams'][0]
-
-    snapshot = doorbell.get_snapshot()
-    
-    return [snapshot]
+    try:
+        ring.update_data()
+        devices = ring.devices()
+        doorbell = devices['stickup_cams'][0]
+        snapshot = doorbell.get_snapshot()
+        
+        if snapshot:
+            return [snapshot]
+        else:
+            raise Exception("Failed to fetch a snapshot")
+    except Exception as e:
+        tb = traceback.format_exc()
+        error_message = f"An error occurred:\n{tb}"
+        send_email("Error Notification: Snapshot Error", error_message)
+        return []

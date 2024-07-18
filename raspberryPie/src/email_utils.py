@@ -30,5 +30,5 @@ def send_email(subject, body):
     except Exception as e:
         print(f"Failed to send email '{subject}': {e}")
 
-def send_error_email(error_message):
+def send_post_error_email(error_message):
     send_email("Error Notification: POST Request Failure", error_message)

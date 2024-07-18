@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 from snapshot import getSnapshot
 from car_detection import image_detect
-from email_utils import send_error_email
+from email_utils import send_post_error_email
 from logger import log_to_csv
 
 def updateTraffic(result, imgs, annotated_imgs):
@@ -62,7 +62,7 @@ def updateTraffic(result, imgs, annotated_imgs):
         error_message = f"{timestamp}: Error making POST request: {e}"
         log_to_csv(timestamp, result, "error", error_message)
         print(error_message)
-        #send_error_email(error_message)
+        #send_post_error_email(error_message)
 
 def is_within_time_range(start_time_str, end_time_str):
     STAGE = os.getenv("STAGE")
@@ -97,7 +97,7 @@ def upload_log_if_needed():
     GDRIVE_FOLDER_ID = os.getenv("GDRIVE_FOLDER_ID")
 
     #if not is_within_time_range("00:00", END_TIME):
-        #upload_to_gdrive(LOG_FILE_PATH, GDRIVE_FOLDER_ID)
+    #    upload_log(LOG_FILE_PATH, GDRIVE_FOLDER_ID)
 
 if __name__ == '__main__':
     dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
