@@ -1,1 +1,1 @@
-zip -r endpoint.zip js api_keys.txt endpoint.php
+zip -r endpoint.zip js .env endpoint.php vendor

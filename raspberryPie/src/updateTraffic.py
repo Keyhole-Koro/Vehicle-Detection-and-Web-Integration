@@ -10,7 +10,7 @@ import cv2
 from dotenv import load_dotenv
 
 from snapshot import getSnapshot
-from car_detection import image_detect
+from car_detection import load_yolo, image_detect
 from email_utils import send_post_error_email
 from logger import log_to_csv
 
@@ -107,17 +107,20 @@ if __name__ == '__main__':
     END_TIME = os.getenv("END_TIME")
 
     start_time = time.time()
+
+    model, classes, output_layers = load_yolo()
+
     while True:
         if is_within_time_range(START_TIME, END_TIME):
-            sum_result = 0
+            total_count = 0
             annotatedImages = []
             image_bufs = getSnapshot()
             for image_buf in image_bufs:
-                (annotated_img, result) = image_detect(image_buf)
+                (annotated_img, result) = image_detect(image_buf, model, classes, output_layers)
                 annotatedImages.append(annotated_img)
-                sum_result += result
+                total_count += result
 
-            updateTraffic(sum_result, image_bufs, annotatedImages)
+            updateTraffic(total_count, image_bufs, annotatedImages)
 
             while True:
                 elapsed_time = time.time() - start_time

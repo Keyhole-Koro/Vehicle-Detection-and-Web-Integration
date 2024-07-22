@@ -5,6 +5,8 @@ After=network.target
 [Service]
 Type=simple
 ExecStart=/usr/bin/python3 src/updateTraffic.py
+Environment="PYTHONPATH=/usr/lib/python3/dist-packages:/home/keyhole/.local/lib/python3.11/site-packages"
+WorkingDirectory=/home/keyhole/Desktop/Vehicle-Detection-and-Web-Integration/raspberryPie/src
 Restart=always
 RestartSec=10
 

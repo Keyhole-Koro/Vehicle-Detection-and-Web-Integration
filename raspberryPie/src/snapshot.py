@@ -17,8 +17,7 @@ RING_PASSWORD = os.getenv("RING_PASSWORD")
 
 target_device_ids = os.getenv("TARGET_DEVICE_IDS").split(',')
 
-
-user_agent = "garage_cam-1.0"
+user_agent = os.getenv("USER_AGENT")
 cache_file = Path(user_agent + ".token.cache")
 
 def token_updated(token):
@@ -70,9 +69,10 @@ def getSnapshot():
                 raise Exception(f"Failed to fetch a snapshot for device ID {doorbell.id}")
         return snapshots
     except Exception as e:
-        tb = traceback.format_exc()
-        error_message = f"An error occurred:\n{tb}"
-        send_email("Error Notification: Snapshot Error", error_message)
+        print(e)
+        #tb = traceback.format_exc()
+        #error_message = f"An error occurred:\n{tb}"
+        #send_email("Error Notification: Snapshot Error", error_message)
         return []
 
 def getAllCameraDeviceIDs():

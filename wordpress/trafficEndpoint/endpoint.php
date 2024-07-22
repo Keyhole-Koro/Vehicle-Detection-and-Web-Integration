@@ -3,7 +3,7 @@
   Plugin Name: Car Detection WebHook Endpoint
   Plugin URI:
   Description: Set up WebHook endpoint to be requested regularly for a limited specific purpose.
-  Version: 1.0.0
+  Version: 1.2.0
   Author: Kiho Katsukawa
   Author URI: https://github.com/Keyhole-Koro
  */
